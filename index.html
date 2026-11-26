@@ -605,7 +605,7 @@ let WS=null;try{if(window.speechSynthesis&&window.SpeechSynthesisUtterance)WS=wi
 let KV=null; // 한 번 고른 기기 목소리는 끝까지 유지
 function koVoice(){if(KV)return KV;try{const vs=WS.getVoices().filter(v=>/^ko/i.test(v.lang));if(vs.length)KV=vs.find(v=>/yuna|유나|sora|heami|female|여성|여자/i.test(v.name))||vs[0]}catch(e){}return KV}
 
-function stopVoice(){try{TTS?.stop?.()}catch(e){}try{WS?.cancel()}catch(e){}}
+function stopVoice(){wsRun++;try{TTS?.stop?.()}catch(e){}try{WS?.cancel()}catch(e){}}
 const LES=document.querySelector('.lesson');
 const st=s=>{const g=$('stage');g.classList.remove('talking','thinking','listening');if(s)g.classList.add(s)};
 const splitS=t=>(String(t).match(/[^.!?…\n]+[.!?…]*["'”’)]*\s*|\n+/g)||[t]).filter(s=>s.trim());
@@ -618,10 +618,21 @@ function unmark(){$('cap').querySelectorAll('.s').forEach(x=>x.classList.remove(
 const say=(t,cap)=>{const ss=cap?showCap(t):splitS(t);const my=CAPN;
   if(TTS&&S.voice!=='device'){const lines=ss.map((s,i)=>({text:s.trim(),voice:S.voice||'buttery',rate:0.95,language:'ko',id:cap?`c${my}_${i}`:`x${i}`}));
     return TTS.speak(lines).catch(()=>{}).finally(()=>{if(cap&&my===CAPN)unmark()})}
-  if(WS){try{const go=()=>{ss.forEach((s,i)=>{const u=new SpeechSynthesisUtterance(s.trim());u.lang='ko-KR';const v=koVoice();if(v)u.voice=v;u.rate=0.95;u.pitch=1.1;u.volume=1;
-        u.onstart=()=>{st('talking');$('soundHint').classList.add('hidden');if(cap&&my===CAPN)mark(i)};
-        u.onend=u.onerror=()=>{if(i===ss.length-1){if($('stage').classList.contains('talking'))st('');if(cap&&my===CAPN)unmark()}};WS.speak(u)});WS.resume()};
-    if(WS.speaking||WS.pending){WS.cancel();setTimeout(go,180)}else go()}catch(e){}}};
+  if(WS){try{const go=()=>wsChain(ss,cap,my);if(WS.speaking||WS.pending){wsRun++;WS.cancel();setTimeout(go,180)}else go()}catch(e){}}};
+let wsRun=0;
+function wsChain(ss,cap,my){const run=++wsRun;let i=0;
+  const next=()=>{if(run!==wsRun)return;
+    if(i>=ss.length){if($('stage').classList.contains('talking'))st('');if(cap&&my===CAPN)unmark();return}
+    const k=i++,txt=ss[k].trim(),u=new SpeechSynthesisUtterance(txt);u.lang='ko-KR';const v=koVoice();if(v)u.voice=v;u.rate=0.95;u.pitch=1.1;u.volume=1;
+    let done=false,heard=false;const t0=Date.now();
+    const fin=()=>{if(done)return;done=true;clearInterval(poll);setTimeout(next,80)};
+    u.onstart=()=>{heard=true;$('soundHint').classList.add('hidden')};u.onend=u.onerror=fin;
+    if(cap&&my===CAPN)mark(k);st('talking');WS.speak(u);WS.resume();
+    const poll=setInterval(()=>{if(run!==wsRun){clearInterval(poll);return}
+      const el=Date.now()-t0;if(WS.speaking)heard=true;
+      if(heard&&el>600&&!WS.speaking&&!WS.pending)fin();          // 끝 신호 없이 끝난 경우
+      else if(el>txt.length*350+6000)fin()},250)};                 // 아무 신호도 없을 때 안전장치
+  next()}
 // 아이폰·아이패드는 버튼을 누른 순간에 한 번 소리를 내야 이후에도 소리가 남 → 들리지 않는 짧은 소리로 열어 두기
 function unlockVoice(){if(!WS||(TTS&&S.voice!=='device'))return;try{const u=new SpeechSynthesisUtterance('.');u.volume=0;u.lang='ko-KR';WS.speak(u)}catch(e){}}
 const canSpeak=()=>!!(TTS||WS);
@@ -637,6 +648,7 @@ showVoiceUI();
     DICT.onState(({state})=>{const on=state==='listening';$('micBtn').setAttribute('aria-pressed',on);$('talkBtn').setAttribute('aria-pressed',on);
       $('talkLbl').textContent=on?'다 말했으면 눌러요':'눌러서 말하기';if(on)st('listening');else if($('stage').classList.contains('listening'))st('')})}
   if(TTS&&TTS.onLine)TTS.onLine(({id})=>{const m=/^c(\d+)_(\d+)$/.exec(id||'');if(m&&+m[1]===CAPN)mark(+m[2])});
+  if(TTS&&TTS.onPosition)TTS.onPosition(({line})=>{const m=/^c(\d+)_(\d+)$/.exec((line&&line.id)||'');if(m&&+m[1]===CAPN&&!$('cap').querySelector(`.s.now[data-i="${m[2]}"]`))mark(+m[2])});
   if(TTS&&TTS.onState)TTS.onState(({state})=>{if(state==='speaking')st('talking');else if($('stage').classList.contains('talking'))st('')});
   talkSetup();
 })();
