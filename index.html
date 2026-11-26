@@ -195,7 +195,8 @@ input,select,textarea{border:2px solid var(--line);border-radius:12px;padding:10
 <section id="vLesson" class="hidden">
   <div class="lesson">
     <div class="lhead">
-      <div class="t"><div class="jua" id="lTitle" style="font-size:20px"></div><div class="muted" id="lSub"></div></div>
+      <button class="btn ghost small" id="exitBtn" aria-label="수업 나가기">← 나가기</button>
+      <div class="t"><div class="jua" id="lTitle" style="font-size:clamp(16px,4.4vw,20px)"></div><div class="muted" id="lSub"></div></div>
       <div class="clock"><svg class="ring" viewBox="0 0 36 36"><circle cx="18" cy="18" r="15" fill="none" style="stroke:var(--line)" stroke-width="5"/><circle id="ringArc" cx="18" cy="18" r="15" fill="none" style="stroke:var(--sun)" stroke-width="5" stroke-linecap="round" stroke-dasharray="0 95" transform="rotate(-90 18 18)"/></svg><span id="lClock">0:00</span></div>
     </div>
     <div class="chat" id="chat" aria-live="polite"></div>
@@ -277,6 +278,8 @@ input,select,textarea{border:2px solid var(--line);border-radius:12px;padding:10
 <div class="dialog hidden" id="pinDlg"><div class="card" style="text-align:center"><h3 id="pinT"></h3><p class="muted" id="pinM"></p>
   <input id="pinInp" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" aria-label="부모님 비밀번호" style="font-size:26px;letter-spacing:10px;width:170px;text-align:center">
   <div class="row" style="margin-top:14px;justify-content:center"><button class="btn" id="pinOk">확인</button><button class="btn ghost" id="pinNo" style="color:inherit">취소</button></div></div></div>
+<div class="dialog hidden" id="exitDlg"><div class="card" style="text-align:center"><h3>수업을 어떻게 할까요?</h3><p class="muted" id="exitMsg"></p>
+  <div style="display:grid;gap:8px;margin-top:12px"><button class="btn sun" id="exWrap">오늘 배운 것 정리하고 마치기</button><button class="btn ghost" id="exLeave" style="color:inherit">그냥 나가기 (기록 안 남음)</button><button class="btn ghost" id="exStay" style="color:inherit">계속하기</button></div></div></div>
 <div class="dialog hidden" id="dlg"><div class="card"><p id="dlgMsg"></p><div class="row"><button class="btn" id="dlgOk">확인</button><button class="btn ghost" id="dlgNo" style="color:inherit">취소</button></div></div></div>
 
 <script>
@@ -619,7 +622,7 @@ $('talkBtn').onclick=()=>{if(!L)return;
 $('typeBtn').onclick=()=>{LES.classList.toggle('typing');if(LES.classList.contains('typing'))$('inp').focus()};
 $('modeBtn').onclick=()=>setMode(!LES.classList.contains('voice'));
 function setMode(v){talkSetup();LES.classList.toggle('voice',v);LES.classList.remove('showlog');P.mode=v?'voice':'chat';save();$('modeBtn').textContent=v?'채팅으로 보기':'선생님 얼굴 보기';if(v){autoRead=canSpeak();$('autoRead').textContent=autoRead?'읽어주기 켬':'읽어주기 끔'}$('chat').scrollTop=1e9}
-function bubble(role,text){const d=document.createElement('div');d.className='msg '+(role==='assistant'?'a':'u');
+function bubble(role,text){if(role==='assistant')$('cap').textContent=text;const d=document.createElement('div');d.className='msg '+(role==='assistant'?'a':'u');
   const w=document.createElement('div');w.className='who';w.textContent=role==='assistant'?'나래 선생님':P.name;
   if(role==='assistant'&&canSpeak()){const b=document.createElement('button');b.className='spk';b.textContent='듣기';b.setAttribute('aria-label','소리로 듣기');b.onclick=()=>say(body.textContent);w.append(b)}
   const body=document.createElement('div');body.textContent=text;d.append(w,body);$('chat').append(d);$('chat').scrollTop=1e9;return body}
@@ -637,13 +640,15 @@ function askExtend(){LES.classList.add('showlog');const t=`벌써 ${Math.round(L
   $('chat').append(row);$('chat').scrollTop=1e9}
 function goWrap(){LES.classList.add('showlog');if(talking){talking=false;DICT?.stop().catch(()=>{})}$('compose').classList.add('hidden');$('wrapup').classList.remove('hidden');$('insight').focus()}
 async function ask(){
-  if(!SAMPLE){bubble('assistant','AI 선생님을 부르려면 이 페이지를 Claude에 로그인한 상태로 열어 주세요.');return}
+  if(!SAMPLE&&window.claude?.use){$('cap').textContent='나래 선생님을 부르는 중…';st('thinking');try{SAMPLE=await Promise.race([claude.use('sample'),new Promise(r=>setTimeout(()=>r(null),12000))])}catch(e){}}
+  if(!L)return;
+  if(!SAMPLE){st('');bubble('assistant','나래 선생님을 부를 수 없어요. Claude에 로그인한 Safari나 Chrome에서 이 링크를 열어 주세요. 그래도 안 되면 컴퓨터에서 열어 보세요.');return}
   const msgs=[{role:'user',content:sysPrompt(P,L.m)+'\n\n[수업 시작] 생활 장면을 아이 눈높이로 생생하게 2~3문장 들려주고, 첫 질문 하나만 던져라.'},...L.msgs];
-  const body=bubble('assistant','생각 중…');$('sendBtn').disabled=true;st('thinking');$('cap').textContent='';
+  const body=bubble('assistant','생각 중…');$('sendBtn').disabled=true;st('thinking');
   try{const r=await SAMPLE(msgs,{cache:false,modelTier:'default',onText:({text})=>{body.textContent=text;$('cap').textContent=text;$('chat').scrollTop=1e9}});
     body.textContent=r.text;$('cap').textContent=r.text;st('');L.msgs.push({role:'assistant',content:r.text});
     if(autoRead)say(r.text);
-  }catch(e){body.textContent=e?.code==='not_granted'?'AI 사용이 허락되지 않았어요. 부모님께 허락을 부탁해 주세요.':e?.code==='rate_limited'?'선생님이 잠깐 숨을 고르고 있어요. 1분 뒤에 다시 보내 주세요.':'연결이 잠깐 끊겼어요. 다시 보내 줄래요?';
+  }catch(e){body.textContent=e?.code==='not_granted'?'AI 사용이 허락되지 않았어요. 부모님께 허락을 부탁해 주세요.':e?.code==='rate_limited'?'선생님이 잠깐 숨을 고르고 있어요. 1분 뒤에 다시 보내 주세요.':'연결이 잠깐 끊겼어요. 다시 보내 줄래요?'+(e?.code?` (${e.code})`:'');$('cap').textContent=body.textContent;st('');
     if(L.msgs.length&&L.msgs[L.msgs.length-1].role==='user')L.lastFail=true}
   $('sendBtn').disabled=false;$('inp').focus()}
 function send(text){text=(text||'').trim();if(!text||!L||$('sendBtn').disabled)return;
@@ -667,6 +672,12 @@ document.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>send(b.dataset.q)
 $('autoRead').onclick=()=>{autoRead=!autoRead;P.autoRead=autoRead;save();$('autoRead').textContent=autoRead?'읽어주기 켬':'읽어주기 끔';$('autoRead').setAttribute('aria-pressed',autoRead);if(!autoRead)stopVoice()};
 $('voiceSel').onchange=()=>{stopVoice();S.voice=$('voiceSel').value;save();say('안녕하세요! 저는 나래 선생님이에요. 오늘도 같이 생각해 볼까요?')};
 $('cap').onclick=()=>{const t=$('cap').textContent;if(t){stopVoice();setTimeout(()=>say(t),60)}};
+function leaveLesson(){clearInterval(timer);stopVoice();if(talking){talking=false;DICT?.stop().catch(()=>{})}L=null;$('exitDlg').classList.add('hidden');openMap(P)}
+$('exitBtn').onclick=()=>{if(!L||L.saved||L.turns<1)return leaveLesson();
+  $('exitMsg').textContent='지금 나가면 오늘 대화는 기록에 남지 않아요. 정리하고 마치면 기록과 배터리가 남아요.';$('exitDlg').classList.remove('hidden')};
+$('exWrap').onclick=()=>{$('exitDlg').classList.add('hidden');goWrap()};
+$('exLeave').onclick=leaveLesson;
+$('exStay').onclick=()=>$('exitDlg').classList.add('hidden');
 $('voicePrev').onclick=()=>say('안녕하세요! 저는 나래 선생님이에요. 오늘도 같이 생각해 볼까요?');
 $('micBtn').onclick=()=>{if(!DICT)return;stopVoice();if($('micBtn').getAttribute('aria-pressed')==='true'){DICT.stop().catch(()=>{});return}DICT.start().catch(e=>{if(e?.code==='not_granted')$('micBtn').classList.add('hidden')})};
 $('endBtn').onclick=()=>{if(L.turns<2){confirmBox('아직 대화가 짧아요. 그래도 마칠까요? (기록은 남지 않아요)',()=>{clearInterval(timer);openMap(P)});return}
@@ -699,7 +710,7 @@ ${talk}
   $('wrapup').classList.add('hidden');
   bubble('assistant',`${r.cheer||'오늘도 끝까지 생각했네요!'}\n\n${L.m.track==='path'?(rec.reached?'다음 돌다리로 건너갈 수 있어요!':'이 돌다리는 다음에 다른 길로 한 번 더 건너 봐요.'):L.m.track==='conundrum'?'오늘 저녁 식탁에서 가족에게도 이 문제를 물어보고 생각을 비교해 봐요!':L.m.track==='subject'?'다음 교과 탐험에서는 이 단원의 또 다른 비밀을 찾아봐요!':L.m.track==='talmud'?'오늘 만든 질문을 가족에게도 던져 보세요. 서로 생각이 다를수록 재미있어요!':'궁금한 걸 끝까지 파고든 게 정말 멋져요!'}${rec.homeMission?`\n\n오늘의 생활 미션: ${rec.homeMission}`:''}`);
   if(autoRead)say(`${r.cheer||'오늘도 끝까지 생각했네요!'} ${rec.homeMission?'오늘의 생활 미션: '+rec.homeMission:''}`);
-  const done=L.m;moreChoices(done);
+  L.saved=true;const done=L.m;moreChoices(done);
   $('saveBtn').disabled=false;$('saveBtn').textContent='공책에 남기기';$('insight').value=''};
 
 function moreChoices(done){const bt=document.createElement('p');bt.className='jua';bt.style.cssText='font-size:19px;align-self:center;margin:0';bt.textContent=`생각 배터리 충전! ${P.battery||0}/${BMAX}`;$('chat').append(bt);
