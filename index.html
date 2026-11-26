@@ -101,11 +101,11 @@ input,select,textarea{border:2px solid var(--line);border-radius:12px;padding:10
 @media(max-width:520px){.sheet .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .stage,.vctl{display:none}
 .lesson.voice .chat{display:none}.lesson.voice .stage{display:grid}.lesson.voice .vctl{display:grid}
-.lesson.voice #typeRow{display:none}.lesson.voice.typing #typeRow{display:flex}
+.lesson.voice #typeRow{display:flex}#typeBtn{display:none}
 .lesson.voice.showlog .chat{display:flex}.lesson.voice.showlog .stage{display:none}
 .lesson:not(.voice) #typeBtn{display:none}
-.stage{place-items:center;align-content:center;gap:12px;padding:10px 16px;overflow:auto}
-.nare-wrap{position:relative;width:min(52vw,250px)}#nare{width:100%;height:auto;display:block}
+.stage{grid-template-columns:auto minmax(0,1fr);align-items:center;align-content:center;gap:22px;padding:12px 18px;overflow:auto;max-width:900px;width:100%;margin:0 auto}
+.nare-wrap{position:relative;width:min(30vw,230px)}#nare{width:100%;height:auto;display:block}
 #mouth,#eyes rect,.wing{transform-box:fill-box;transform-origin:center}
 #eyes rect{animation:blink 4.5s infinite}
 @keyframes blink{0%,95%,100%{transform:scaleY(1)}97%{transform:scaleY(.12)}}
@@ -119,8 +119,23 @@ input,select,textarea{border:2px solid var(--line);border-radius:12px;padding:10
 .stage.thinking .dots{display:flex}.dots i{width:8px;height:8px;border-radius:50%;background:var(--pine);animation:dot 1s infinite}.dots i:nth-child(2){animation-delay:.15s}.dots i:nth-child(3){animation-delay:.3s}
 @keyframes dot{50%{opacity:.25}}
 .stage.listening .nare-wrap::after{content:'듣고 있어요';position:absolute;left:50%;bottom:-4px;transform:translateX(-50%);background:#e8613c;color:#fff;font-size:13px;font-weight:800;padding:4px 10px;border-radius:99px;white-space:nowrap}
-.cap{word-break:keep-all;font-family:'RIDIBatang','Gothic A1',serif;font-size:clamp(19px,2.5vw,22px);line-height:1.75;max-width:640px;text-align:center;white-space:pre-wrap;background:var(--tutor);padding:14px 18px;border-radius:20px}
-.cap:empty{display:none}.mine{text-align:center;min-height:1.4em;color:var(--soft);max-width:640px}
+.side{display:grid;gap:10px;min-width:0}
+.bub{position:relative;background:var(--tutor);border:2px solid var(--line);border-radius:22px;box-shadow:0 4px 0 var(--line)}
+.bub::before{content:'';position:absolute;left:-14px;top:42%;border:12px solid transparent;border-right:14px solid var(--line);border-left:0}
+.bub::after{content:'';position:absolute;left:-10px;top:calc(42% + 2px);border:10px solid transparent;border-right:12px solid var(--tutor);border-left:0}
+.cap{position:relative;word-break:keep-all;font-family:'RIDIBatang','Gothic A1',serif;font-size:clamp(18px,2.4vw,21px);line-height:1.8;text-align:left;white-space:pre-wrap;padding:16px 20px;max-height:44vh;overflow-y:auto;cursor:pointer;scroll-behavior:smooth}
+.cap:empty::before{content:'…';color:var(--soft)}
+.cap .s{border-radius:6px;padding:1px 2px;transition:background .2s,color .2s}
+.cap .s.now{background:var(--pine);color:#fff;font-weight:700;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.cap .s.past{opacity:.55}
+.mine{min-height:1.4em;color:var(--soft)}
+.seg{display:inline-flex;border:2px solid var(--line);border-radius:12px;overflow:hidden;flex:none}
+.seg button{border:0;background:transparent;color:var(--ink);font:inherit;font-size:14px;font-weight:700;padding:7px 12px;cursor:pointer;min-height:36px}
+.seg button[aria-pressed=true]{background:var(--pine);color:#fff}
+@media(max-width:640px){.stage{grid-template-columns:minmax(0,1fr);justify-items:center;gap:16px}.nare-wrap{width:min(40vw,160px)}.side{width:100%}
+ .bub::before{left:50%;top:-14px;transform:translateX(-50%);border:12px solid transparent;border-bottom:14px solid var(--line);border-top:0}
+ .bub::after{left:50%;top:-10px;transform:translateX(-50%);border:10px solid transparent;border-bottom:12px solid var(--tutor);border-top:0}
+ .cap{max-height:34vh}.talk{width:84px;height:84px}}
 .vctl{justify-items:center}
 .talk{width:104px;height:104px;border-radius:50%;border:0;background:var(--sun);color:var(--sunInk);font:inherit;font-weight:800;cursor:pointer;box-shadow:0 6px 0 #c9920f;margin-bottom:6px}
 .talk:active{transform:translateY(3px);box-shadow:0 3px 0 #c9920f}.talk:focus-visible{outline:3px solid var(--pine);outline-offset:3px}
@@ -221,14 +236,16 @@ input,select,textarea{border:2px solid var(--line);border-radius:12px;padding:10
   <rect id="mouth" x="100" y="108" width="20" height="6" rx="3" fill="#8a3b2e"/>
  </g>
 </svg><div class="dots" aria-hidden="true"><i></i><i></i><i></i></div></div>
-      <div class="cap" id="cap" aria-live="polite" title="눌러서 다시 듣기" style="cursor:pointer"></div>
-      <p class="muted hidden" id="soundHint" style="margin:0;text-align:center">소리가 안 나오면 말풍선을 눌러 주세요. 아이폰은 옆면 무음 스위치를 꺼 주세요.</p>
-      <div class="mine" id="mine"></div>
+      <div class="side">
+        <div class="bub"><div class="cap" id="cap" aria-live="polite" title="눌러서 다시 듣기"></div></div>
+        <p class="muted hidden" id="soundHint" style="margin:0">소리가 안 나오면 말풍선을 눌러 주세요. 아이폰은 옆면 무음 스위치를 꺼 주세요.</p>
+        <div class="mine" id="mine"></div>
+      </div>
     </div>
     <div class="compose" id="compose">
       <div class="vctl" id="vctl"><button class="talk" id="talkBtn" aria-pressed="false"><span id="talkLbl">눌러서 말하기</span></button></div>
       <div class="quick">
-        <button class="btn ghost small" id="modeBtn">채팅으로 보기</button>
+        <span class="seg" role="group" aria-label="수업 방식"><button type="button" data-m="voice" aria-pressed="true">말로 하기</button><button type="button" data-m="chat" aria-pressed="false">채팅으로 하기</button></span>
         <button class="btn ghost small" id="typeBtn">글로 쓰기</button>
         <button class="btn ghost small" data-q="힌트를 조금만 주세요.">힌트 주세요</button>
         <button class="btn ghost small" data-q="잘 모르겠어요.">모르겠어요</button>
@@ -591,9 +608,19 @@ function koVoice(){if(KV)return KV;try{const vs=WS.getVoices().filter(v=>/^ko/i.
 function stopVoice(){try{TTS?.stop?.()}catch(e){}try{WS?.cancel()}catch(e){}}
 const LES=document.querySelector('.lesson');
 const st=s=>{const g=$('stage');g.classList.remove('talking','thinking','listening');if(s)g.classList.add(s)};
-const say=t=>{if(TTS&&S.voice!=='device')return TTS.speak(t,{voice:S.voice||'buttery',rate:0.95,language:'ko'}).catch(()=>{});
-  if(WS){try{const go=()=>{const u=new SpeechSynthesisUtterance(t);u.lang='ko-KR';const v=koVoice();if(v)u.voice=v;u.rate=0.95;u.pitch=1.1;u.volume=1;
-      u.onstart=()=>{st('talking');$('soundHint').classList.add('hidden')};u.onend=u.onerror=()=>{if($('stage').classList.contains('talking'))st('')};WS.resume();WS.speak(u)};
+const splitS=t=>(String(t).match(/[^.!?…\n]+[.!?…]*["'”’)]*\s*|\n+/g)||[t]).filter(s=>s.trim());
+let CAPN=0; // 말풍선 문장 번호(읽을 때마다 새로)
+function showCap(t){const ss=splitS(t);CAPN++;$('cap').innerHTML=ss.map((s,i)=>`<span class="s" data-i="${i}">${esc(s)}</span>`).join('');return ss}
+function mark(i){const c=$('cap');c.querySelectorAll('.s').forEach(x=>{const k=+x.dataset.i;x.classList.toggle('now',k===i);x.classList.toggle('past',k<i)});
+  const n=c.querySelector('.s.now');if(n){const top=n.offsetTop-c.clientHeight/3;c.scrollTop=Math.max(0,top)}}
+function unmark(){$('cap').querySelectorAll('.s').forEach(x=>x.classList.remove('now','past'))}
+// say(글, true) = 말풍선에 문장으로 띄우고, 읽는 문장을 따라 강조
+const say=(t,cap)=>{const ss=cap?showCap(t):splitS(t);const my=CAPN;
+  if(TTS&&S.voice!=='device'){const lines=ss.map((s,i)=>({text:s.trim(),voice:S.voice||'buttery',rate:0.95,language:'ko',id:cap?`c${my}_${i}`:`x${i}`}));
+    return TTS.speak(lines).catch(()=>{}).finally(()=>{if(cap&&my===CAPN)unmark()})}
+  if(WS){try{const go=()=>{ss.forEach((s,i)=>{const u=new SpeechSynthesisUtterance(s.trim());u.lang='ko-KR';const v=koVoice();if(v)u.voice=v;u.rate=0.95;u.pitch=1.1;u.volume=1;
+        u.onstart=()=>{st('talking');$('soundHint').classList.add('hidden');if(cap&&my===CAPN)mark(i)};
+        u.onend=u.onerror=()=>{if(i===ss.length-1){if($('stage').classList.contains('talking'))st('');if(cap&&my===CAPN)unmark()}};WS.speak(u)});WS.resume()};
     if(WS.speaking||WS.pending){WS.cancel();setTimeout(go,180)}else go()}catch(e){}}};
 // 아이폰·아이패드는 버튼을 누른 순간에 한 번 소리를 내야 이후에도 소리가 남 → 들리지 않는 짧은 소리로 열어 두기
 function unlockVoice(){if(!WS||(TTS&&S.voice!=='device'))return;try{const u=new SpeechSynthesisUtterance('.');u.volume=0;u.lang='ko-KR';WS.speak(u)}catch(e){}}
@@ -609,19 +636,20 @@ showVoiceUI();
     DICT.onPartial(({text})=>{if(talking)$('mine').textContent='내 대답: '+(tbuf?tbuf+' ':'')+text});
     DICT.onState(({state})=>{const on=state==='listening';$('micBtn').setAttribute('aria-pressed',on);$('talkBtn').setAttribute('aria-pressed',on);
       $('talkLbl').textContent=on?'다 말했으면 눌러요':'눌러서 말하기';if(on)st('listening');else if($('stage').classList.contains('listening'))st('')})}
+  if(TTS&&TTS.onLine)TTS.onLine(({id})=>{const m=/^c(\d+)_(\d+)$/.exec(id||'');if(m&&+m[1]===CAPN)mark(+m[2])});
   if(TTS&&TTS.onState)TTS.onState(({state})=>{if(state==='speaking')st('talking');else if($('stage').classList.contains('talking'))st('')});
   talkSetup();
 })();
 let talking=false,tbuf='';
-function talkSetup(){if(!DICT){$('talkLbl').textContent='눌러서 대답 쓰기'}}
+function talkSetup(){$('vctl').style.display=DICT?'':'none';if(!DICT)$('inp').placeholder='여기에 쓰거나, 키보드의 마이크를 눌러 말해도 돼요'}
 $('talkBtn').onclick=()=>{if(!L)return;
   if(!DICT){LES.classList.add('typing');$('inp').focus();$('mine').textContent='화면 키보드의 마이크 버튼을 누르면 말로도 쓸 수 있어요.';return}
   if(talking){talking=false;DICT.stop().catch(()=>{}).then(()=>{const t=tbuf.trim();tbuf='';if(t)send(t);else $('mine').textContent='잘 안 들렸어요. 다시 한 번 눌러서 말해 줄래요?'});return}
   stopVoice();tbuf='';talking=true;$('mine').textContent='듣고 있어요…';
   DICT.start().catch(e=>{talking=false;$('mine').textContent=e?.code==='not_granted'?'마이크를 쓸 수 없어요. "글로 쓰기"를 눌러 주세요.':'다시 한 번 눌러 주세요.'})};
 $('typeBtn').onclick=()=>{LES.classList.toggle('typing');if(LES.classList.contains('typing'))$('inp').focus()};
-$('modeBtn').onclick=()=>setMode(!LES.classList.contains('voice'));
-function setMode(v){talkSetup();LES.classList.toggle('voice',v);LES.classList.remove('showlog');P.mode=v?'voice':'chat';save();$('modeBtn').textContent=v?'채팅으로 보기':'선생님 얼굴 보기';if(v){autoRead=canSpeak();$('autoRead').textContent=autoRead?'읽어주기 켬':'읽어주기 끔'}$('chat').scrollTop=1e9}
+document.querySelectorAll('.seg [data-m]').forEach(b=>b.onclick=()=>setMode(b.dataset.m==='voice'));
+function setMode(v){talkSetup();LES.classList.toggle('voice',v);LES.classList.remove('showlog');P.mode=v?'voice':'chat';save();document.querySelectorAll('.seg [data-m]').forEach(b=>b.setAttribute('aria-pressed',(b.dataset.m==='voice')===v));if(v){autoRead=canSpeak();$('autoRead').textContent=autoRead?'읽어주기 켬':'읽어주기 끔'}$('chat').scrollTop=1e9}
 function bubble(role,text){if(role==='assistant')$('cap').textContent=text;const d=document.createElement('div');d.className='msg '+(role==='assistant'?'a':'u');
   const w=document.createElement('div');w.className='who';w.textContent=role==='assistant'?'나래 선생님':P.name;
   if(role==='assistant'&&canSpeak()){const b=document.createElement('button');b.className='spk';b.textContent='듣기';b.setAttribute('aria-label','소리로 듣기');b.onclick=()=>say(body.textContent);w.append(b)}
@@ -631,9 +659,9 @@ function tick(){if(!L)return;const s=Math.floor((Date.now()-L.t0)/1000);$('lCloc
   $('ringArc').setAttribute('stroke-dasharray',`${Math.min(94,s/L.limit*94)} 95`);
   if(s>=L.limit&&!L.asked){L.asked=true;
     if(!L.extended)askExtend();
-    else{const t='약속한 시간이 다 됐어요. 오늘 생각한 것을 내 말로 정리해 봐요.';bubble('assistant',t);if(autoRead)say(t);goWrap()}}}
+    else{const t='약속한 시간이 다 됐어요. 오늘 생각한 것을 내 말로 정리해 봐요.';bubble('assistant',t);if(autoRead)say(t,true);goWrap()}}}
 function smallBtn(t,cls,fn){const b=document.createElement('button');b.className='btn small '+cls;b.textContent=t;b.onclick=fn;return b}
-function askExtend(){LES.classList.add('showlog');const t=`벌써 ${Math.round(L.limit/60)}분이 됐어요. 조금 더 해 볼까요, 오늘은 여기서 정리할까요?`;bubble('assistant',t);if(autoRead)say(t);
+function askExtend(){LES.classList.add('showlog');const t=`벌써 ${Math.round(L.limit/60)}분이 됐어요. 조금 더 해 볼까요, 오늘은 여기서 정리할까요?`;bubble('assistant',t);if(autoRead)say(t,true);
   const row=document.createElement('div');row.className='row';row.style.alignSelf='flex-start';
   row.append(smallBtn('5분 더 할래요','sun',()=>{row.remove();LES.classList.remove('showlog');L.extended=true;L.limit+=300;L.asked=false;$('inp').focus()}),
     smallBtn('여기서 정리할래요','ghost',()=>{row.remove();goWrap()}));
@@ -646,8 +674,8 @@ async function ask(){
   const msgs=[{role:'user',content:sysPrompt(P,L.m)+'\n\n[수업 시작] 생활 장면을 아이 눈높이로 생생하게 2~3문장 들려주고, 첫 질문 하나만 던져라.'},...L.msgs];
   const body=bubble('assistant','생각 중…');$('sendBtn').disabled=true;st('thinking');
   try{const r=await SAMPLE(msgs,{cache:false,modelTier:'default',onText:({text})=>{body.textContent=text;$('cap').textContent=text;$('chat').scrollTop=1e9}});
-    body.textContent=r.text;$('cap').textContent=r.text;st('');L.msgs.push({role:'assistant',content:r.text});
-    if(autoRead)say(r.text);
+    body.textContent=r.text;st('');L.msgs.push({role:'assistant',content:r.text});
+    if(autoRead)say(r.text,true);else showCap(r.text);
   }catch(e){body.textContent=e?.code==='not_granted'?'AI 사용이 허락되지 않았어요. 부모님께 허락을 부탁해 주세요.':e?.code==='rate_limited'?'선생님이 잠깐 숨을 고르고 있어요. 1분 뒤에 다시 보내 주세요.':'연결이 잠깐 끊겼어요. 다시 보내 줄래요?'+(e?.code?` (${e.code})`:'');$('cap').textContent=body.textContent;st('');
     if(L.msgs.length&&L.msgs[L.msgs.length-1].role==='user')L.lastFail=true}
   $('sendBtn').disabled=false;$('inp').focus()}
@@ -671,7 +699,7 @@ $('inp').onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preven
 document.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>send(b.dataset.q));
 $('autoRead').onclick=()=>{autoRead=!autoRead;P.autoRead=autoRead;save();$('autoRead').textContent=autoRead?'읽어주기 켬':'읽어주기 끔';$('autoRead').setAttribute('aria-pressed',autoRead);if(!autoRead)stopVoice()};
 $('voiceSel').onchange=()=>{stopVoice();S.voice=$('voiceSel').value;save();say('안녕하세요! 저는 나래 선생님이에요. 오늘도 같이 생각해 볼까요?')};
-$('cap').onclick=()=>{const t=$('cap').textContent;if(t){stopVoice();setTimeout(()=>say(t),60)}};
+$('cap').onclick=()=>{const t=$('cap').textContent;if(t){stopVoice();setTimeout(()=>say(t,true),80)}};
 function leaveLesson(){clearInterval(timer);stopVoice();if(talking){talking=false;DICT?.stop().catch(()=>{})}L=null;$('exitDlg').classList.add('hidden');openMap(P)}
 $('exitBtn').onclick=()=>{if(!L||L.saved||L.turns<1)return leaveLesson();
   $('exitMsg').textContent='지금 나가면 오늘 대화는 기록에 남지 않아요. 정리하고 마치면 기록과 배터리가 남아요.';$('exitDlg').classList.remove('hidden')};
